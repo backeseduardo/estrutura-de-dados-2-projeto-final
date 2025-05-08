@@ -17,18 +17,20 @@ void read_directory(fs::node *root, std::string &path, int level = 0)
   while ((entry = readdir(dir)))
   {
     std::string name = entry->d_name;
-    if (name == "." || name == ".." || name.front() == '.')
+    auto type = entry->d_type;
+    if (name == "." || name == "..")
+      continue;
+    // Ignore hidden files
+    if (name.front() == '.')
+      continue;
+    if (!fs::is_dir(type) && !fs::is_file(type))
       continue;
 
     std::string fullPath = path + "/" + entry->d_name;
-    struct stat statBuf;
-    if (stat(fullPath.c_str(), &statBuf) == -1)
-      continue;
-
-    auto child = fs::create(name, S_ISDIR(statBuf.st_mode) ? 'd' : ' ', entry->d_reclen);
+    auto child = fs::create(name, fs::is_dir(entry->d_type) ? 'd' : ' ', 0);
     fs::addchild(root, child);
 
-    if (S_ISDIR(statBuf.st_mode))
+    if (fs::is_dir(entry->d_type))
     {
       read_directory(child, fullPath, level + 1);
     }

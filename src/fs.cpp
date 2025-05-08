@@ -41,4 +41,14 @@ namespace fs
     for (int i = 0; i < size; i++)
       fs::foreach (root->_children[i], fn, level + 1);
   }
+
+  bool is_dir(unsigned char d_type)
+  {
+    return d_type == DT_DIR;
+  }
+
+  bool is_file(unsigned char d_type)
+  {
+    return d_type == DT_REG;
+  }
 }
