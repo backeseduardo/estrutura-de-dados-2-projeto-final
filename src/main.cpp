@@ -67,6 +67,7 @@ void exibirMenuPesquisa() {
 }
 
 int main(int argc, char *argv[]) {
+  // Faz o carregamento da estrutura do sistema de arquivos para a memória
   std::string path = (argc > 1) ? argv[1] : ".";
   auto root = fs::create(path, 'd');
   root->hidden = 1;
