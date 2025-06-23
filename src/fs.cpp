@@ -10,15 +10,17 @@ namespace fs
     std::string name;
     char type;
     int size;
+    int hidden;
     std::vector<node *> _children;
   };
 
-  node *create(std::string &name, char type, int size)
+  node *create(std::string &name, char type)
   {
     node *n = new node;
     n->name = name;
     n->type = type;
-    n->size = size;
+    n->size = 0;
+    n->hidden = 0;
     return n;
   }
 
@@ -34,7 +36,8 @@ namespace fs
   {
     if (!root)
       return;
-    fn(root, level);
+    if (root->hidden == 0)
+      fn(root, level);
     std::size_t size = root->_children.size();
     if (size == 0)
       return;

@@ -26,13 +26,20 @@
      if (!fs::is_dir(type) && !fs::is_file(type))
        continue;
 
-     std::string fullPath = path + "/" + entry->d_name;
-     auto child = fs::create(name, fs::is_dir(entry->d_type) ? 'd' : ' ', 0);
-     fs::addchild(root, child);
+    std::string fullPath = path + "/" + entry->d_name;
+    auto child = fs::create(name, fs::is_dir(entry->d_type) ? 'd' : ' ');
+    fs::addchild(root, child);
 
      if (fs::is_dir(entry->d_type))
      {
        read_directory(child, fullPath, level + 1);
+    }
+    else
+    {
+      struct stat statBuf;
+      if (stat(fullPath.c_str(), &statBuf) == -1)
+        continue;
+      child->size = statBuf.st_size;
     }
   }
 
@@ -72,7 +79,8 @@ void exibirMenuPesquisa()
 int main(int argc, char *argv[])
 {
   std::string path = (argc > 1) ? argv[1] : ".";
-  auto root = fs::create(path, 'd', 0);
+  auto root = fs::create(path, 'd');
+  root->hidden = 1;
   read_directory(root, path);
 
   fs::foreach (root, [](auto n, int level)
