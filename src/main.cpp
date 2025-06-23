@@ -17,23 +17,25 @@ void read_directory(fs::node *root, std::string &path, int level = 0) {
   struct dirent *entry;
   while ((entry = readdir(dir))) {
     std::string name = entry->d_name;
-    auto type = entry->d_type;
+    auto d_type = entry->d_type;
     if (name == "." || name == "..") continue;
     // Ignore hidden files
     if (name.front() == '.') continue;
-    if (!fs::is_dir(type) && !fs::is_file(type)) continue;
+    if (!fs::is_dir(d_type) && !fs::is_file(d_type)) continue;
 
     std::string fullPath = path + "/" + entry->d_name;
-    auto child = fs::create(name, fs::is_dir(entry->d_type) ? 'd' : ' ');
+    auto child = fs::create(name, fs::is_dir(d_type) ? 'd' : 'f');
     fs::addchild(root, child);
 
-    if (fs::is_dir(entry->d_type)) {
+    if (fs::is_dir(d_type)) {
       read_directory(child, fullPath, level + 1);
+      root->size += child->size;
     } else {
       // update file size
       struct stat statBuf;
       if (stat(fullPath.c_str(), &statBuf) == -1) continue;
       child->size = statBuf.st_size;
+      root->size += statBuf.st_size;
     }
   }
 
@@ -71,7 +73,7 @@ int main(int argc, char *argv[]) {
   // Faz o carregamento da estrutura do sistema de arquivos para a memória
   std::string path = (argc > 1) ? argv[1] : ".";
   auto root = fs::create(path, 'd');
-  root->hidden = 1;
+  root->hidden = 0;
   read_directory(root, path);
 
   bool running = true;
@@ -84,9 +86,17 @@ int main(int argc, char *argv[]) {
     switch (opcaoPrincipal) {
       case 1:
         std::cout << "Exibir Arvore Completa\n";
+
         fs::foreach (root, [](auto n, int level) {
-          std::cout << std::setw(10) << n->size << " "
-                    << std::string(level * 2, ' ') << n->name << std::endl;
+          std::cout << std::string(level * 2, ' ');
+          std::cout << n->name;
+          std::cout << " (";
+          if (n->type == 'd') {
+            std::cout << n->children.size();
+            std::cout << " filhos, ";
+          }
+          std::cout << n->size << " bytes";
+          std::cout << ")\n";
         });
         break;
 
