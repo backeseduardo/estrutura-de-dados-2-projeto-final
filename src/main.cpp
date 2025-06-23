@@ -1,6 +1,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -71,7 +72,7 @@ void exibirMenuPesquisa() {
 
 int main(int argc, char *argv[]) {
   // Faz o carregamento da estrutura do sistema de arquivos para a memória
-  std::string path = (argc > 1) ? argv[1] : ".";
+  std::string path = (argc > 1) ? argv[1] : std::filesystem::current_path();
   auto root = fs::create(path, 'd');
   root->hidden = 0;
   read_directory(root, path);
