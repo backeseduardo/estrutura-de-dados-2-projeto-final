@@ -30,6 +30,7 @@ void read_directory(fs::node *root, std::string &path, int level = 0) {
     if (fs::is_dir(entry->d_type)) {
       read_directory(child, fullPath, level + 1);
     } else {
+      // update file size
       struct stat statBuf;
       if (stat(fullPath.c_str(), &statBuf) == -1) continue;
       child->size = statBuf.st_size;
@@ -67,6 +68,7 @@ void exibirMenuPesquisa() {
 }
 
 int main(int argc, char *argv[]) {
+  // Faz o carregamento da estrutura do sistema de arquivos para a memória
   std::string path = (argc > 1) ? argv[1] : ".";
   auto root = fs::create(path, 'd');
   root->hidden = 1;
