@@ -12,7 +12,7 @@ struct node {
   std::vector<node *> children;
 };
 
-node *create(std::string &name, unsigned char type) {
+node *create(const std::string &name, unsigned char type) {
   node *n = new node;
   n->name = name;
   n->type = type;

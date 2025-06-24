@@ -8,7 +8,7 @@
 
 #include "./fs.cpp"
 
-void read_directory(fs::node *root, std::string &path, int level = 0) {
+void read_directory(fs::node *root, const std::string &path, int level = 0) {
   DIR *dir = opendir(path.c_str());
   if (!dir) {
     std::cout << "dir not found" << std::endl;
@@ -46,7 +46,7 @@ void read_directory(fs::node *root, std::string &path, int level = 0) {
 //// Strings dos Menus Principal e da parte de Pesquisa
 
 void exibirMenuPrincipal() {
-  std::cout << "==============================\n"
+  std::cout << "\n==============================\n"
                "       MENU PRINCIPAL         \n"
                "==============================\n"
                "1. Exibir a árvore completa\n"
@@ -86,10 +86,10 @@ int main(int argc, char *argv[]) {
 
     switch (opcaoPrincipal) {
       case 1:
-        std::cout << "Exibir Arvore Completa\n";
+        std::cout << "\n";
 
         fs::foreach (root, [](auto n, int level) {
-          std::cout << std::string(level * 2, ' ');
+          std::cout << std::string(level * 4, ' ');
           std::cout << n->name;
           std::cout << " (";
           if (n->type == 'd') {
