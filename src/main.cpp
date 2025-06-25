@@ -47,37 +47,60 @@ void read_directory(fs::node *root, const std::string &path, int level = 0) {
   closedir(dir);
 }
 
-void find_biggest_file(fs::node *root) {
-  if (!root) return;
-
+std::vector<fs::node *> find_biggest_files(fs::node *root) {
   fs::node *biggest = nullptr;
-  fs::foreach (root, [&biggest](fs::node *n, int level) {
-    if (n->type == 'd') return;
-
-    if (biggest == nullptr || n->size > biggest->size) {
+  std::vector<fs::node *> files;
+  fs::foreach (root, [&biggest, &files](fs::node *n, int level) {
+    if (n->type != 'f') return;
+    if (biggest == nullptr) {
       biggest = n;
+      files.push_back(n);
+      return;
+    }
+    if (n->size == biggest->size) {
+      files.push_back(n);
+      return;
+    }
+    if (n->size > biggest->size) {
+      biggest = n;
+      files.clear();
+      files.push_back(n);
     }
   });
-
-  std::cout << "\n" << biggest->full_path << " " << biggest->size << "\n";
+  return files;
 }
 
-void find_most_crowded_directory(fs::node *root) {
+std::vector<fs::node *> find_most_crowded_directories(fs::node *root) {
   fs::node *dir = nullptr;
-  fs::foreach (root, [&dir](fs::node *n, int level) {
-    if (n->type == 'd' && (dir == nullptr || n->n_files > dir->n_files)) {
+  std::vector<fs::node *> directories;
+  fs::foreach (root, [&dir, &directories](fs::node *n, int level) {
+    if (n->type != 'd') return;
+    if (dir == nullptr) {
       dir = n;
+      directories.push_back(n);
+      return;
+    }
+    if (n->n_files == dir->n_files) {
+      directories.push_back(n);
+      return;
+    }
+    if (n->n_files > dir->n_files) {
+      dir = n;
+      directories.clear();
+      directories.push_back(n);
     }
   });
-  std::cout << dir->full_path << " " << dir->n_files << "\n";
+  return directories;
 }
 
-void find_empty_directories(fs::node *root) {
-  fs::foreach (root, [](fs::node *n, int level) {
+std::vector<fs::node *> find_empty_directories(fs::node *root) {
+  std::vector<fs::node *> directories;
+  fs::foreach (root, [&directories](fs::node *n, int level) {
     if (n->type == 'd' && n->children.size() == 0) {
-      std::cout << n->full_path << "\n";
+      directories.push_back(n);
     }
   });
+  return directories;
 }
 
 //// Strings dos Menus Principal e da parte de Pesquisa
@@ -141,7 +164,7 @@ int main(int argc, char *argv[]) {
 
       case 2:
         std::cout << "Exportar Arvore em HTML\n";
-        //TODO RAFAEL
+        // TODO RAFAEL
         break;
 
       case 3:
@@ -149,10 +172,18 @@ int main(int argc, char *argv[]) {
           exibirMenuPesquisa();
           std::cin >> opcaoPesquisa;
 
+          std::vector<fs::node *> biggest_files;
+          std::vector<fs::node *> crowded_dirs;
+          std::vector<fs::node *> empty_dirs;
+
           switch (opcaoPesquisa) {
             case 1:
-              std::cout << "\nMaior Arquivo:\n";
-              find_biggest_file(root);
+              std::cout << "\nMaior(es) Arquivo(s):\n";
+              biggest_files = find_biggest_files(root);
+              for (auto f : biggest_files) {
+                std::cout << "\n"
+                          << f->full_path << " (" << f->size << " bytes)\n";
+              }
               break;
 
             case 2:
@@ -162,7 +193,11 @@ int main(int argc, char *argv[]) {
 
             case 3:
               std::cout << "\nPasta com mais arquivos\n";
-              find_most_crowded_directory(root);
+              crowded_dirs = find_most_crowded_directories(root);
+              for (auto d : crowded_dirs) {
+                std::cout << d->full_path << " (" << d->n_files << " filhos, "
+                          << d->size << " bytes)\n";
+              }
               break;
 
             case 4:
@@ -172,7 +207,10 @@ int main(int argc, char *argv[]) {
 
             case 5:
               std::cout << "\nPastas vazias\n";
-              find_empty_directories(root);
+              empty_dirs = find_empty_directories(root);
+              for (auto d : empty_dirs) {
+                std::cout << d->full_path << "\n";
+              }
               break;
 
             case 6:
