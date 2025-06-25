@@ -10,6 +10,11 @@
 
 #include "./fs.cpp"
 
+bool endsWith(const std::string &str, const std::string &end) {
+  if (end.size() > str.size()) return false;
+  return str.compare(str.size() - end.size(), end.size(), end) == 0;
+}
+
 void read_directory(fs::node *root, const std::string &path, int level = 0) {
   DIR *dir = opendir(path.c_str());
   if (!dir) {
@@ -103,10 +108,29 @@ std::vector<fs::node *> find_empty_directories(fs::node *root) {
   return directories;
 }
 
+std::vector<fs::node *> find_bigger_files_than(fs::node *root, int size) {
+  std::vector<fs::node *> files;
+  fs::foreach (root, [&size, &files](fs::node *n, int level) {
+    if (n->type != 'f') return;
+    if (n->size > size) files.push_back(n);
+  });
+  return files;
+}
+
+std::vector<fs::node *> find_files_by_extension(fs::node *root,
+                                                const std::string &extension) {
+  std::vector<fs::node *> files;
+  fs::foreach (root, [extension, &files](fs::node *n, int level) {
+    if (n->type != 'f') return;
+    if (endsWith(n->name, extension)) files.push_back(n);
+  });
+  return files;
+}
+
 //// Strings dos Menus Principal e da parte de Pesquisa
 
 void exibirMenuPrincipal() {
-  std::cout << "\n==============================\n"
+  std::cout << "==============================\n"
                "       MENU PRINCIPAL         \n"
                "==============================\n"
                "1. Exibir a árvore completa\n"
@@ -117,7 +141,7 @@ void exibirMenuPrincipal() {
 }
 
 void exibirMenuPesquisa() {
-  std::cout << "\n==============================\n"
+  std::cout << "==============================\n"
                "        MENU PESQUISA         \n"
                "==============================\n"
                "1. Maior arquivo\n"
@@ -160,6 +184,7 @@ int main(int argc, char *argv[]) {
           std::cout << n->size << " bytes";
           std::cout << ")\n";
         });
+        std::cout << "\n";
         break;
 
       case 2:
@@ -175,42 +200,61 @@ int main(int argc, char *argv[]) {
           std::vector<fs::node *> biggest_files;
           std::vector<fs::node *> crowded_dirs;
           std::vector<fs::node *> empty_dirs;
+          int size;
+          std::vector<fs::node *> files_bigger_than;
+          std::string extension;
+          std::vector<fs::node *> files_extension;
 
           switch (opcaoPesquisa) {
             case 1:
-              std::cout << "\nMaior(es) Arquivo(s):\n";
+              std::cout << "Maior(es) Arquivo(s):\n";
               biggest_files = find_biggest_files(root);
               for (auto f : biggest_files) {
-                std::cout << "\n"
-                          << f->full_path << " (" << f->size << " bytes)\n";
+                std::cout << f->full_path << " (" << f->size << " bytes)\n";
               }
+              std::cout << "\n";
               break;
 
             case 2:
-              std::cout << "\nArquivos com mais do que N bytes\n";
-              // Funcao Arquivo com mais N Bytes
+              std::cout << "Informe o tamanho em bytes: ";
+              std::cin >> size;
+              std::cout << "Arquivos com mais do que N bytes(N=" << size
+                        << ")\n";
+              files_bigger_than = find_bigger_files_than(root, size);
+              for (auto f : files_bigger_than) {
+                std::cout << f->full_path << " (" << f->size << " bytes)\n";
+              }
+              std::cout << "\n";
               break;
 
             case 3:
-              std::cout << "\nPasta com mais arquivos\n";
+              std::cout << "Pasta com mais arquivos\n";
               crowded_dirs = find_most_crowded_directories(root);
               for (auto d : crowded_dirs) {
                 std::cout << d->full_path << " (" << d->n_files << " filhos, "
                           << d->size << " bytes)\n";
               }
+              std::cout << "\n";
               break;
 
             case 4:
-              std::cout << "\nArquivos por extensao\n";
-              // Funcao para listar arquivos por extensão
+              std::cout << "Informe a extensão: ";
+              std::cin >> extension;
+              std::cout << "Arquivos por extensao (" << extension << "):\n";
+              files_extension = find_files_by_extension(root, extension);
+              for (auto f : files_extension) {
+                std::cout << f->full_path << " (" << f->size << " bytes)\n";
+              }
+              std::cout << "\n";
               break;
 
             case 5:
-              std::cout << "\nPastas vazias\n";
+              std::cout << "Pastas vazias\n";
               empty_dirs = find_empty_directories(root);
               for (auto d : empty_dirs) {
                 std::cout << d->full_path << "\n";
               }
+              std::cout << "\n";
               break;
 
             case 6:
