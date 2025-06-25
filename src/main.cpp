@@ -4,7 +4,9 @@
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
+#include <queue>
 #include <string>
+#include <utility>
 
 #include "./fs.cpp"
 
@@ -20,27 +22,62 @@ void read_directory(fs::node *root, const std::string &path, int level = 0) {
     std::string name = entry->d_name;
     auto d_type = entry->d_type;
     if (name == "." || name == "..") continue;
-    // Ignore hidden files
+    // Ignora arquivos ocultos
     if (name.front() == '.') continue;
     if (!fs::is_dir(d_type) && !fs::is_file(d_type)) continue;
 
-    std::string fullPath = path + "/" + entry->d_name;
-    auto child = fs::create(name, fs::is_dir(d_type) ? 'd' : 'f');
+    std::string full_path = path + "/" + entry->d_name;
+
+    auto child = fs::create(name, full_path, fs::is_dir(d_type) ? 'd' : 'f');
     fs::addchild(root, child);
 
     if (fs::is_dir(d_type)) {
-      read_directory(child, fullPath, level + 1);
+      read_directory(child, full_path, level + 1);
       root->size += child->size;
     } else {
       // update file size
       struct stat statBuf;
-      if (stat(fullPath.c_str(), &statBuf) == -1) continue;
+      if (stat(full_path.c_str(), &statBuf) == -1) continue;
       child->size = statBuf.st_size;
       root->size += statBuf.st_size;
+      root->n_files += 1;
     }
   }
 
   closedir(dir);
+}
+
+void find_biggest_file(fs::node *root) {
+  if (!root) return;
+
+  fs::node *biggest = nullptr;
+  fs::foreach (root, [&biggest](fs::node *n, int level) {
+    if (n->type == 'd') return;
+
+    if (biggest == nullptr || n->size > biggest->size) {
+      biggest = n;
+    }
+  });
+
+  std::cout << "\n" << biggest->full_path << " " << biggest->size << "\n";
+}
+
+void find_most_crowded_directory(fs::node *root) {
+  fs::node *dir = nullptr;
+  fs::foreach (root, [&dir](fs::node *n, int level) {
+    if (n->type == 'd' && (dir == nullptr || n->n_files > dir->n_files)) {
+      dir = n;
+    }
+  });
+  std::cout << dir->full_path << " " << dir->n_files << "\n";
+}
+
+void find_empty_directories(fs::node *root) {
+  fs::foreach (root, [](fs::node *n, int level) {
+    if (n->type == 'd' && n->children.size() == 0) {
+      std::cout << n->full_path << "\n";
+    }
+  });
 }
 
 //// Strings dos Menus Principal e da parte de Pesquisa
@@ -72,9 +109,10 @@ void exibirMenuPesquisa() {
 
 int main(int argc, char *argv[]) {
   // Faz o carregamento da estrutura do sistema de arquivos para a memória
-  std::string path = (argc > 1) ? argv[1] : std::filesystem::current_path();
-  auto root = fs::create(path, 'd');
-  root->hidden = 0;
+  std::filesystem::path path = (argc > 1)
+                                   ? std::filesystem::weakly_canonical(argv[1])
+                                   : std::filesystem::current_path();
+  auto root = fs::create(path, path, 'd');
   read_directory(root, path);
 
   bool running = true;
@@ -112,8 +150,8 @@ int main(int argc, char *argv[]) {
 
           switch (opcaoPesquisa) {
             case 1:
-              std::cout << "\nPesquisar Maior Arquivo\n";
-              // Funcao Maior Arquivo
+              std::cout << "\nMaior Arquivo:\n";
+              find_biggest_file(root);
               break;
 
             case 2:
@@ -123,7 +161,7 @@ int main(int argc, char *argv[]) {
 
             case 3:
               std::cout << "\nPasta com mais arquivos\n";
-              // Funcao para pasta com mais arquivos
+              find_most_crowded_directory(root);
               break;
 
             case 4:
@@ -133,7 +171,7 @@ int main(int argc, char *argv[]) {
 
             case 5:
               std::cout << "\nPastas vazias\n";
-              // Funcao para listar pastas vazias
+              find_empty_directories(root);
               break;
 
             case 6:
