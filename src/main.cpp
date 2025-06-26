@@ -25,10 +25,11 @@ void read_directory(fs::node *root, const std::string &path, int level = 0) {
   struct dirent *entry;
   while ((entry = readdir(dir))) {
     std::string name = entry->d_name;
-    auto d_type = entry->d_type;
     if (name == "." || name == "..") continue;
     // Ignora arquivos ocultos
     if (name.front() == '.') continue;
+
+    auto d_type = entry->d_type;
     if (!fs::is_dir(d_type) && !fs::is_file(d_type)) continue;
 
     std::string full_path = path + "/" + entry->d_name;
