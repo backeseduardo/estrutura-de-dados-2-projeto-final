@@ -188,8 +188,8 @@ int main(int argc, char *argv[]) {
         break;
 
       case 2:
-        std::cout << "Exportar Arvore em HTML\n";
-        // TODO RAFAEL
+        std::cout << "Exportar para HTML\n";
+        fs::export_HTML(root);
         break;
 
       case 3:
