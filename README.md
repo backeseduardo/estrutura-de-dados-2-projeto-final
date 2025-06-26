@@ -44,7 +44,26 @@ Este projeto foi desenvolvido para a disciplina de **Estrutura de Dados 2**  do 
 
 ---
 
-### Compilação
-Abra o terminal na pasta do projeto e execute:
+### Executar o projeto
 
-g++ -std=c++17 main.cpp -o caminho do diretorio (caso não seja informado o programa utilizara o diretorio atual como base)
+Versão mínima g++ 11.4.0
+
+Abra o terminal na pasta raiz do projeto e execute:
+
+```sh
+g++ src/main.cpp
+```
+
+O executável `a.out` será criado na raiz do projeto.
+
+Para executar o programa:
+
+```sh
+./a.out
+```
+
+ou passando o caminho de algum diretório como argumento:
+
+```sh
+./a.out ../
+```
